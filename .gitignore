@@ -8,3 +8,8 @@ Titanic/xgboost_model.json
 Titanic/xgboost_submission.csv
 BinaryBankChurn/test.csv
 BinaryBankChurn/train.csv
+BinaryBankChurn/xgboost_prediction.csv
+BinaryBankChurn/__pycache__/AllINeed.cpython-311.pyc
+BinaryBankChurn/__pycache__/DataShop.cpython-311.pyc
+BinaryBankChurn/__pycache__/TheNavigator.cpython-311.pyc
+BinaryBankChurn/bank_churn_xgboost.json

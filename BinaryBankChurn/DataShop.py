@@ -2,7 +2,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, 
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 class DataShop:
     # Easy as 1...
@@ -20,16 +20,19 @@ class DataShop:
                            identifiers:list[str]=None, 
                            numerical:list[str]=None, 
                            one_hots:list[str]=None,
-                           target:str=None):
+                           target:str=None,
+                           test_id:str=None):
         self.identifier_col_names = identifiers
         self.numerical_col_names = numerical
         self.one_hot_col_names = one_hots
         self.target_col_name = target
+        self.test_id_col_name = test_id
 
         self.process_train_and_test()
 
     def process_train_and_test(self):
         self.X_train, self.y_train = self.clean_inputs(self.train_df, training=True)
+        self.test_ids = self.test_df[self.test_id_col_name]
         self.test_df = self.clean_inputs(self.test_df)
 
         self.create_data_transformer()
@@ -64,3 +67,7 @@ class DataShop:
     @property
     def testing_data(self):
         return self.X_test
+    
+    @property
+    def testing_ids(self):
+        return self.test_ids
