@@ -6,3 +6,5 @@ Titanic/titanic_mlp_model.h5
 Titanic/train.csv
 Titanic/xgboost_model.json
 Titanic/xgboost_submission.csv
+BinaryBankChurn/test.csv
+BinaryBankChurn/train.csv
