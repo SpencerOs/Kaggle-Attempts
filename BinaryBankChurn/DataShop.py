@@ -17,13 +17,15 @@ class DataShop:
 
     # 2...
     def categorize_columns(self, 
-                           identifiers:list[str]=None, 
-                           numerical:list[str]=None, 
-                           one_hots:list[str]=None,
-                           target:str=None,
-                           test_id:str=None):
+                            identifiers:list[str]=None, 
+                            numerical:list[str]=None, 
+                            booleans:list[str]=None,
+                            one_hots:list[str]=None,
+                            target:str=None,
+                            test_id:str=None):
         self.identifier_col_names = identifiers
         self.numerical_col_names = numerical
+        self.boolean_col_names = booleans
         self.one_hot_col_names = one_hots
         self.target_col_name = target
         self.test_id_col_name = test_id
@@ -42,6 +44,8 @@ class DataShop:
     def clean_inputs(self, df, training=False):
         # Remove identifier cols (ones that have no direct corr over output)
         df = df.drop(self.identifier_col_names, axis=1)
+
+        df[self.boolean_col_names] = df[self.boolean_col_names].astype(bool)
 
         if training:
             X_train = df.drop(self.target_col_name, axis=1)
