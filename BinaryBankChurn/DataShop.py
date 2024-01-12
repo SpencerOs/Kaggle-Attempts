@@ -1,6 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
 from sklearn.compose import make_column_transformer
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
@@ -34,12 +35,18 @@ class DataShop:
 
     def process_train_and_test(self):
         self.X_train, self.y_train = self.clean_inputs(self.train_df, training=True)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            self.X_train,
+            self.y_train,
+            test_size=0.15
+        )
         self.test_ids = self.test_df[self.test_id_col_name]
         self.test_df = self.clean_inputs(self.test_df)
 
         self.create_data_transformer()
         self.X_train = self.preprocessor.fit_transform(self.X_train)
-        self.X_test = self.preprocessor.transform(self.test_df)
+        self.X_test = self.preprocessor.transform(self.X_test)
+        self.X_pred = self.preprocessor.transform(self.test_df)
 
     def clean_inputs(self, df, training=False):
         # Remove identifier cols (ones that have no direct corr over output)
@@ -64,14 +71,31 @@ class DataShop:
         )
 
     # and 3!
-    @property
-    def training_data(self):
-        return self.X_train, self.y_train
     
     @property
-    def testing_data(self):
+    def training_split_X(self):
+        return self.X_train
+    
+    @property
+    def training_split_y(self):
+        return self.y_train
+    
+    @property
+    def testing_split_X(self):
         return self.X_test
+    
+    @property
+    def testing_split_y(self):
+        return self.y_test
+    
+    @property
+    def train_frame(self):
+        return self.train_df
     
     @property
     def testing_ids(self):
         return self.test_ids
+    
+    @property
+    def test_set(self):
+        return self.test_df

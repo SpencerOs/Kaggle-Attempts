@@ -49,15 +49,12 @@ def main(args):
         test_id=test_id
     )
 
-    X_train, y_train = ds.training_data
-
     space = get_model_hp_space(args)
     model_class = get_model_class(args)
     navigator = TheNavigator(
         space, 
         model_class, 
-        X_train, 
-        y_train, 
+        ds, 
         'recall_score'
     )
     
@@ -65,11 +62,11 @@ def main(args):
 
     model.save_model(f'bank_churn_{args.model}')
 
-    predictions = model.predict(ds.testing_data)
+    model.predict()
 
     submission = pd.DataFrame({
         'id': ds.testing_ids,
-        'Exited': predictions
+        'Exited': model.y_pred
     })
     submission.to_csv(f'{args.model}_prediction.csv', index=False)
 
