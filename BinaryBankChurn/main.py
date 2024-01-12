@@ -69,11 +69,11 @@ def main(args):
 
     model.save_model(f'bank_churn_{args.model}')
 
-    model.predict()
+    predicted_outcome = model.predict(ds.test_set)
 
     submission = pd.DataFrame({
         'id': ds.testing_ids,
-        'Exited': model.y_pred
+        'Exited': predicted_outcome
     })
     submission.to_csv(f'{args.model}_prediction.csv', index=False)
 

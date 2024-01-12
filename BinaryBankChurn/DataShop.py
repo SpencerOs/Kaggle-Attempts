@@ -1,6 +1,6 @@
 import pandas as pd
 from pandas import DataFrame
-from sklearn.compose import make_column_transformer
+from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -48,6 +48,12 @@ class DataShop:
         self.X_test = self.preprocessor.transform(self.X_test)
         self.X_pred = self.preprocessor.transform(self.test_df)
 
+        transformed_col_names = self.preprocessor.get_feature_names_out()
+
+        self.X_train = DataFrame(self.X_train, columns=transformed_col_names)
+        self.X_test = DataFrame(self.X_test, columns=transformed_col_names)
+        self.X_pred = DataFrame(self.X_pred, columns=transformed_col_names)
+
     def clean_inputs(self, df, training=False):
         # Remove identifier cols (ones that have no direct corr over output)
         df = df.drop(self.identifier_col_names, axis=1)
@@ -65,9 +71,11 @@ class DataShop:
         numerical_pipeline = make_pipeline(StandardScaler())
         categorical_pipeline = make_pipeline(OneHotEncoder(handle_unknown='ignore'))
 
-        self.preprocessor = make_column_transformer(
-            (numerical_pipeline, self.numerical_col_names),
-            (categorical_pipeline, self.one_hot_col_names)
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', numerical_pipeline, self.numerical_col_names),
+                ('cat', categorical_pipeline, self.one_hot_col_names)
+            ]
         )
 
     # and 3!
@@ -98,4 +106,4 @@ class DataShop:
     
     @property
     def test_set(self):
-        return self.test_df
+        return self.X_pred

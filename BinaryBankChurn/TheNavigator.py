@@ -29,6 +29,6 @@ class TheNavigator:
     def explore_and_learn(self, max_evals:int):
         best = fmin(fn=self.objective, space=self.space, algo=tpe.suggest, max_evals=max_evals, trials=Trials())
         intersecting_best = {k: best[k] for k in best if k in self.space}
-        model_reshaped = self.model_class(params={'data_shop':self.data_shop}, exploratory_params=intersecting_best)
+        model_reshaped = self.model_class(params={'data_shop':self.data_shop, 'eval_fn':self.eval_metric}, exploratory_params=intersecting_best)
         model_reshaped.fit()
         return model_reshaped
