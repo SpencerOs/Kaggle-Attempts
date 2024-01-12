@@ -2,9 +2,10 @@ from hyperopt import fmin, tpe, Trials
 from sklearn.metrics import f1_score, recall_score
 
 class TheNavigator:
-    def __init__(self, space, model_class, data_shop, eval_metric):
+    def __init__(self, space, model_class, model_params, data_shop, eval_metric):
         self.space = space
         self.model_class = model_class
+        self.model_params = model_params
         self.data_shop = data_shop
         if eval_metric == 'f1_score':
             self.eval_metric = f1_score
@@ -13,11 +14,9 @@ class TheNavigator:
 
     def objective(self, expl_params):
         # There is a knife for you. It is shaped like [X, y]
-        params = {
-            'data_shop': self.data_shop,
-            'eval_fn': self.eval_metric
-        }
-        model = self.model_class(params=params, exploratory_params=expl_params)
+        self.model_params['data_shop'] = self.data_shop
+        self.model_params['eval_fn'] = self.eval_metric
+        model = self.model_class(params=self.model_params, exploratory_params=expl_params)
 
         # Take up the knife. 
         model.fit()

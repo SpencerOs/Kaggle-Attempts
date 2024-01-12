@@ -75,6 +75,8 @@ class CoxPHModel(Model):
 
         self.data_shop = params['data_shop']
         self.eval_fn = params['eval_fn']
+        self.duration_col = params['duration_col']
+        self.event_col = params['event_col']
 
         if exploratory_params is not None:
             self.model = CoxPHFitter(exploratory_params)
@@ -83,8 +85,8 @@ class CoxPHModel(Model):
 
     def fit(self):
         self.model.fit(self.data_shop.train_frame, 
-                       duration_col='Tenure', 
-                       event_col='Exited')
+                       duration_col=self.duration_col, 
+                       event_col=self.event_col)
     
     def predict(self, X_test=None):
         if X_test is None:

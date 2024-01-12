@@ -30,6 +30,11 @@ def get_model_class(args):
     elif args.model == cph_name:
         return CoxPHModel
     
+def get_model_params(args):
+    if args.model == cph_name:
+        return {'duration_col': 'Tenure', 'event_col': 'Exited'}
+    return {}
+    
 
 def main(args):
     ds = DataShop(train_file="train.csv", test_file="test.csv")
@@ -51,9 +56,11 @@ def main(args):
 
     space = get_model_hp_space(args)
     model_class = get_model_class(args)
+    model_params = get_model_params(args)
     navigator = TheNavigator(
         space, 
         model_class, 
+        model_params,
         ds, 
         'recall_score'
     )
