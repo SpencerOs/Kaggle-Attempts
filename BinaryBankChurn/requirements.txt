@@ -3,3 +3,5 @@ lifelines
 pandas
 scikit-learn
 xgboost
+tensorflow==2.13
+tensorflow-metal==1.0

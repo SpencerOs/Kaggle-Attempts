@@ -15,17 +15,20 @@ class TheNavigator:
             self.eval_metric = roc_auc_score
 
     def objective(self, expl_params):
-        # There is a knife for you. It is shaped like [X, y]
-        self.model_params['data_shop'] = self.data_shop
-        self.model_params['eval_fn'] = self.eval_metric
-        model = self.model_class(params=self.model_params, exploratory_params=expl_params)
+        try:
+            # There is a knife for you. It is shaped like [X, y]
+            self.model_params['data_shop'] = self.data_shop
+            self.model_params['eval_fn'] = self.eval_metric
+            model = self.model_class(params=self.model_params, exploratory_params=expl_params)
 
-        # Take up the knife. 
-        model.fit()
-        # ŷ the data. 
-        model.predict()
-        # Take your new shape.
-        return -model.eval # Negative eval score to shoot for minimization
+            # Take up the knife. 
+            model.fit()
+            # ŷ the data. 
+            model.predict()
+            # Take your new shape.
+            return 1 - model.eval
+        except:
+            return 1
     
 
     def explore_and_learn(self, max_evals:int):
