@@ -3,11 +3,11 @@ import pandas as pd
 
 from hyperopt import hp
 
-from AllINeed import XGBoostModel, CoxPHModel
+from AllINeed import XGBoostModel, ForwardModel
 from DataShop import DataShop
 from TheNavigator import TheNavigator
 
-cph_name = 'cph'
+forward_name = 'forward'
 xgboost_name = 'xgboost'
 
 def get_model_hp_space(args):
@@ -19,30 +19,34 @@ def get_model_hp_space(args):
             'subsample': hp.uniform('subsample', 0.5, 1.0),                 # Continuous values between 1/2 and 1
             'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 1.0)    # Continuous values between 1/2 and 1
         }
-    elif args.model == cph_name:
+    elif args.model == forward_name:
         return {
-            'l1_ratio': hp.uniform('l1_ratio', 0.0, 1.0)
+            'num_layers': hp.choice('num_layers', range(1, 5)),
+            'neurons_per_layer': hp.choice('neurons_per_layer', [32, 64, 128, 256]),
+            'learning_rate': hp.loguniform('learning_rate', -5, 0),
+            'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
+            'optimizer': hp.choice('optimizer', ['adam', 'rmsprop', 'sgd']),
+            'batch_size': hp.choice('batch_size', [32, 64, 128]),
+            'epochs': hp.choice('epochs', [10, 20, 50, 1008])
         }
     
 def get_model_class(args):
     if args.model == xgboost_name:
         return XGBoostModel
-    elif args.model == cph_name:
-        return CoxPHModel
-    
-def get_model_params(args):
-    if args.model == cph_name:
-        return {'duration_col': 'Tenure', 'event_col': 'Exited'}
-    return {}
+    elif args.model == forward_name:
+        return ForwardModel
     
 
 def main(args):
     ds = DataShop(train_file="train.csv", test_file="test.csv")
 
     identifiers = ['CustomerId', 'Surname']
-    numerical = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary']
+    numerical = ['CreditScore', 'Age', 'Balance', 'NumOfProducts', 'EstimatedSalary']
+    if args.model == xgboost_name:
+        numerical.append('Tenure')
     booleans = ['HasCrCard', 'IsActiveMember']
     one_hots = ['Geography', 'Gender']
+    non_proc = []
     target = 'Exited'
     test_id = 'id'
     ds.categorize_columns(
@@ -50,26 +54,25 @@ def main(args):
         numerical=numerical,
         booleans=booleans,
         one_hots=one_hots,
+        non_proc=non_proc,
         target=target,
         test_id=test_id
     )
 
     space = get_model_hp_space(args)
     model_class = get_model_class(args)
-    model_params = get_model_params(args)
     navigator = TheNavigator(
         space, 
         model_class, 
-        model_params,
         ds, 
-        'recall_score'
+        args.eval_metric
     )
     
     model = navigator.explore_and_learn(max_evals=10000)
 
     model.save_model(f'bank_churn_{args.model}')
 
-    predicted_outcome = model.predict(ds.test_set)
+    predicted_outcome = model.predict(ds.submission_set)
 
     submission = pd.DataFrame({
         'id': ds.testing_ids,
@@ -84,9 +87,15 @@ if __name__ == "__main__":
         "--model", 
         type=str,
         default=xgboost_name,
-        choices=[xgboost_name, cph_name], 
+        choices=[xgboost_name, forward_name], 
         required=True, 
         help='Which model you\'d like to train on')
+    parser.add_argument(
+        "--eval_metric",
+        type=str,
+        default='f1_score',
+        choices=['f1_score', 'recall_score', 'roc_auc'],
+        help="Which evaluation_metric would you like to use")
     args = parser.parse_args()
 
     main(args)

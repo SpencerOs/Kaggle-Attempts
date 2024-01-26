@@ -22,37 +22,47 @@ class DataShop:
                             numerical:list[str]=None, 
                             booleans:list[str]=None,
                             one_hots:list[str]=None,
+                            non_proc:list[str]=None,
                             target:str=None,
                             test_id:str=None):
         self.identifier_col_names = identifiers
         self.numerical_col_names = numerical
         self.boolean_col_names = booleans
         self.one_hot_col_names = one_hots
+        self.non_proc_col_names = non_proc
         self.target_col_name = target
         self.test_id_col_name = test_id
 
         self.process_train_and_test()
 
     def process_train_and_test(self):
-        self.X_train, self.y_train = self.clean_inputs(self.train_df, training=True)
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X_train,
-            self.y_train,
-            test_size=0.15
-        )
+        X_train, y_train = self.clean_inputs(self.train_df, training=True)
         self.test_ids = self.test_df[self.test_id_col_name]
-        self.test_df = self.clean_inputs(self.test_df)
+        test_df = self.clean_inputs(self.test_df)
+
+        X_train_transform = X_train.drop(columns=self.non_proc_col_names)
+        X_pred_transform = test_df.drop(columns=self.non_proc_col_names)
 
         self.create_data_transformer()
-        self.X_train = self.preprocessor.fit_transform(self.X_train)
-        self.X_test = self.preprocessor.transform(self.X_test)
-        self.X_pred = self.preprocessor.transform(self.test_df)
+        X_train_transform = self.preprocessor.fit_transform(X_train_transform)
+        X_pred_transform = self.preprocessor.transform(X_pred_transform)
 
         transformed_col_names = self.preprocessor.get_feature_names_out()
+        X_train_transform = DataFrame(X_train_transform, columns=transformed_col_names)
+        X_pred_transform = DataFrame(X_pred_transform, columns=transformed_col_names)
 
-        self.X_train = DataFrame(self.X_train, columns=transformed_col_names)
-        self.X_test = DataFrame(self.X_test, columns=transformed_col_names)
-        self.X_pred = DataFrame(self.X_pred, columns=transformed_col_names)
+        X_train_non_transform = X_train[self.non_proc_col_names]
+        X_pred_non_transform = test_df[self.non_proc_col_names]
+
+        self.train_df = pd.concat([X_train_transform, X_train_non_transform.reset_index(drop=True)], axis=1)
+        self.X_pred = pd.concat([X_pred_transform, X_pred_non_transform.reset_index(drop=True)], axis=1)
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            self.train_df,
+            y_train,
+            test_size=0.15
+        )
+        self.train_df[self.target_col_name] = y_train.reset_index(drop=True)
 
     def clean_inputs(self, df, training=False):
         # Remove identifier cols (ones that have no direct corr over output)
@@ -81,29 +91,25 @@ class DataShop:
     # and 3!
     
     @property
-    def training_split_X(self):
+    def train_X(self):
         return self.X_train
     
     @property
-    def training_split_y(self):
+    def train_y(self):
         return self.y_train
     
     @property
-    def testing_split_X(self):
+    def test_X(self):
         return self.X_test
     
     @property
-    def testing_split_y(self):
+    def test_y(self):
         return self.y_test
-    
-    @property
-    def train_frame(self):
-        return self.train_df
     
     @property
     def testing_ids(self):
         return self.test_ids
     
     @property
-    def test_set(self):
+    def submission_set(self):
         return self.X_pred
