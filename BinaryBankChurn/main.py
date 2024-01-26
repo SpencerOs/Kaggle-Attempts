@@ -3,7 +3,7 @@ import pandas as pd
 
 from hyperopt import hp
 
-from AllINeed import XGBoostModel, ForwardModel
+from Models import XGBoostModel, ForwardModel
 from DataShop import DataShop
 from TheNavigator import TheNavigator
 
