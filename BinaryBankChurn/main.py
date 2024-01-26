@@ -27,7 +27,7 @@ def get_model_hp_space(args):
             'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
             'optimizer': hp.choice('optimizer', ['adam', 'rmsprop', 'sgd']),
             'batch_size': hp.choice('batch_size', [32, 64, 128]),
-            'epochs': hp.choice('epochs', [10, 20, 50, 1008])
+            'epochs': hp.choice('epochs', [10, 20, 50, 100])
         }
     
 def get_model_class(args):
