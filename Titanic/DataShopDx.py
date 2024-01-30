@@ -4,7 +4,7 @@ import mlx.nn as nn
 import mlx.data as dx
 import numpy as np
 
-class DataShop:
+class DataShopDx:
     # Easy as 1...
     def __init__(self, train_file:str, test_file:str, meta):
         try:
@@ -21,31 +21,21 @@ class DataShop:
 
             # Remove the label column from features
             feature_names = np.array(csv_reader.fieldnames)
-            label_index = np.where(feature_names == meta['target_name'])[0][0]
+            label_index = np.where(feature_names == meta['target_name'] or feature_names == meta['identifiers'])[0][0]
             features = np.delete(features, label_index, axis=1)
 
             # Convert feature data to numeric format
             features = features.astype(float)
 
-            # Spit the data into training and testing sets (85% training, 15% testing)
+            # Split the data into training and testing sets (85% training, 15% testing)
             test_size = int(0.15 * len(features))
-            X_train, X_test = features[test_size:], features[:test_size]
-            y_train, y_test = labels[test_size:], labels[:test_size]
-
-            self.train_stream = dx.stream_csv_reader(train_file)
-            self.test_stream = dx.stream_csv_reader(test_file)
-
+            self.X_train, self.X_test = features[test_size:], features[:test_size]
+            self.y_train, self.y_test = labels[test_size:], labels[:test_size]
 
         except FileNotFoundError:
             print("One or both files were not found.")
         except Exception as e:
             print(f"An error occurred: {e}")
-
-    def __call__(self, attributes, target):
-        identifiers = attributes['identifiers']
-        for id in identifiers:
-            self.train_stream.filter_key(id, True)
-            self.test_stream.filter_key(id, True)
 
     def batch_iterate(self, batch_size):
         perm = mx.array(np.random.permutation(self.y_train.size))
@@ -62,9 +52,21 @@ class DataShop:
         return self.y_train
     
     @property
+    def test_X(self):
+        return self.X_test
+    
+    @property
+    def test_y(self):
+        return self.y_test
+    
+    @property
     def testing_ids(self):
         return self.test_ids
     
     @property
     def submission_set(self):
         return self.X_test
+    
+    @property
+    def submission_targets(self):
+        return self.y_test

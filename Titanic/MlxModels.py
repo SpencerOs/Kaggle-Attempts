@@ -47,8 +47,9 @@ class MLX_MLP(nn.Module):
         self.data_shop = params['data_shop']
         self.eval_fn = params['eval_fn']
         self.batch_size = exploratory_params['batch_size']
-        self.loss_and_grad_fn = exploratory_params['loss_and_grad_fn']
+        self.loss_fn = exploratory_params['loss_fn']
         self.optimizer = exploratory_params['optimizer']
+        self.num_epochs = exploratory_params['num_epochs']
 
         num_layers = exploratory_params['num_layers']
         input_dim = exploratory_params['input_dim']
@@ -71,12 +72,33 @@ class MLX_MLP(nn.Module):
         return self.layers[-1](x)
 
     def fit(self):
-        for X, y in self.data_shop.batch_iterate():
-            loss, grads = self.loss_and_grad_fn(self.model, X, y)
-            self.optimizer.update(self.model, grads)
-            mx.eval(self.model.parameters(), self.optimizer.state)
-        accuracy = self.eval_fn(self.model, )
-        result = self(self.data_shop)
+        loss_and_grad_fn = nn.value_and_grad(self, self.loss_fn)
+
+        for e in range(self.num_epochs):
+            tic = time.perf_counter()
+            for X, y in self.data_shop.batch_iterate():
+                loss, grads = loss_and_grad_fn(self.model, X, y)
+                self.optimizer.update(self.model, grads)
+                mx.eval(self.model.parameters(), self.optimizer.state)
+            
+            eval_score = self.eval_fn(self.data_shop.test_y, self(self.data_shop.test_X))
+            toc = time.perf_counter()
+            print(
+                f"Epoch {e}: Eval score {eval_score},\n"
+                f"{toc - tic:.3f} (s)"
+            )
+
 
     def predict(self):
-        return self.model(self.data_shop.submission_set)
+        self.y_pred = self.model(self.data_shop.test_X)
+        mx.eval(self.model.parameters())
+
+    def save_model(self, filename):
+        pass
+
+    @property
+    def eval(self):
+        eval = None
+        if hasattr(self, 'y_pred'):
+            eval = self.eval_fn(self.data_shop.test_y, self.y_pred)
+        return eval
