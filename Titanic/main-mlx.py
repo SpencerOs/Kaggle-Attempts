@@ -7,7 +7,7 @@ import argparse
 import pandas as pd
 from hyperopt import hp
 
-from Titanic.DataShopDx import DataShop
+from DataShopDx import DataShopDx
 from MlxModels import MLX_MLP
 from MlxNavigator import MlxNavigator
 
@@ -18,12 +18,14 @@ mlp_name = 'mlp'
 def get_model_hp_space(args):
     if args.model == mlp_name:
         return {
-            'num_layers': hp.choice('num_layers', range(3, 11)),
-            'learning_rate': hp.loguniform('learning _rate', -5, 0),
-            'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
-            'optimizer': hp.choice('optimizer', [optim.Adam, optim.SGD, optim.RMSprop]),
             'batch_size': hp.choice('batch_size', [32, 64, 128]),
-            'epochs': hp.choice('epochs', [10, 20, 30, 50])
+            'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
+            'epochs': hp.choice('epochs', [10, 20, 30, 50]),
+            'hidden_dim': hp.choice('hidden_dim', range(6, 36)),
+            'learning_rate': hp.loguniform('learning_rate', -5, 0),
+            'loss_fn': hp.choice('loss_fn', [nn.losses.cross_entropy, nn.losses.mse_loss]),
+            'num_layers': hp.choice('num_layers', range(3, 11)),
+            'optimizer': hp.choice('optimizer', [optim.Adam, optim.SGD, optim.RMSprop])
         }
     
 def get_model_class(args):
@@ -54,7 +56,7 @@ def main(args):
         'identifiers': identifiers,
         'target_name': target
     }
-    ds = DataShop(train_file="train.csv", test_file="test.csv", meta=meta)
+    ds = DataShopDx(train_file="train.csv", test_file="test.csv", meta=meta)
 
     space = get_model_hp_space(args)
     model_class = get_model_class(args)
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        defaut=mlp_name,
+        default=mlp_name,
         choices=[mlp_name],
         help='Which model you\'d like to train on')
     parser.add_argument(

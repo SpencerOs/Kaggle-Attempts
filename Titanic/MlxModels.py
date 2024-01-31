@@ -5,8 +5,6 @@ import mlx.nn as nn
 import mlx.optimizers as optim
 import numpy as np
 
-import mnist
-
 from abc import ABC, abstractmethod
 
 class MLX_Model(ABC):
@@ -46,15 +44,20 @@ class MLX_MLP(nn.Module):
         
         self.data_shop = params['data_shop']
         self.eval_fn = params['eval_fn']
+
         self.batch_size = exploratory_params['batch_size']
+        self.epochs = exploratory_params['epochs']
         self.loss_fn = exploratory_params['loss_fn']
-        self.optimizer = exploratory_params['optimizer']
-        self.num_epochs = exploratory_params['num_epochs']
+
+        self.optimizer = exploratory_params['optimizer'](learning_rate=10**exploratory_params['learning_rate'])
 
         num_layers = exploratory_params['num_layers']
-        input_dim = exploratory_params['input_dim']
+        # input_dim = len(params['data_shop'].train_X[0])
+        print(f'ds: {dir(params["data_shop"])}')
+        print(f'train_X: {params["data_shop"].train_X}')
         hidden_dim = exploratory_params['hidden_dim']
-        output_dim = exploratory_params['output_dim']
+        # output_dim = len(params['data_shop'].train_y[0])
+        print(f'ds.train_y: {len(params["data_shop"].train_y[0])}')
 
 
         layer_sizes = [input_dim] + [hidden_dim] * num_layers + [output_dim]
@@ -74,7 +77,7 @@ class MLX_MLP(nn.Module):
     def fit(self):
         loss_and_grad_fn = nn.value_and_grad(self, self.loss_fn)
 
-        for e in range(self.num_epochs):
+        for e in range(self.epochs):
             tic = time.perf_counter()
             for X, y in self.data_shop.batch_iterate():
                 loss, grads = loss_and_grad_fn(self.model, X, y)
@@ -94,6 +97,7 @@ class MLX_MLP(nn.Module):
         mx.eval(self.model.parameters())
 
     def save_model(self, filename):
+        # I'll have to look up just how we commit an MLX model to the drive using the filename string
         pass
 
     @property
