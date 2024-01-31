@@ -26,7 +26,7 @@ class DataShopDx:
 
         # Remove the label column from features
         feature_names = np.array(csv_reader.fieldnames)
-        label_index = np.where(feature_names == meta['target_name'] or feature_names == meta['identifiers'])[0][0]
+        label_index = np.where(np.logical_or(feature_names == meta['target_name'], feature_names == meta['identifiers']))[0]
         features = np.delete(features, label_index, axis=1)
         sub_feature_names = np.array(test_csv_reader.fieldnames)
         sub_index = np.where(sub_feature_names == meta['identifiers'])[0][0]
