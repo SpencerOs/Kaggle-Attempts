@@ -17,3 +17,9 @@ BinaryBankChurn/forward_predicion.csv
 BinaryBankChurn/__pycache__/AllINeed.cpython-310.pyc
 BinaryBankChurn/__pycache__/DataShop.cpython-310.pyc
 BinaryBankChurn/__pycache__/TheNavigator.cpython-310.pyc
+BinaryBankChurn/throwaway.py
+*.h5
+*.csv
+*.pyc
+*-checkpoint.py
+*-checkpoint.ipynb
