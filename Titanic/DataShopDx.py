@@ -40,7 +40,7 @@ class DataShopDx:
         test_size = int(0.15 * len(features))
         self.X_train, self.X_test = features[test_size:], features[:test_size]
         self.y_train, self.y_test = labels[test_size:], labels[:test_size]
-        self.testing_ids = sub_index
+        self.test_ids = sub_index
         self.X_val = sub_features
 
         # except FileNotFoundError:
