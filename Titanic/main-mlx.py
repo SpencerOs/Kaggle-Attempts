@@ -15,18 +15,26 @@ problem_name = 'titanic'
 
 mlp_name = 'mlp'
 
+def get_model_hp_choices(name):
+    if name == mlp_name:
+        return {
+            'batch_size': [32, 64, 128],
+            'epochs': [10, 20, 30, 50],
+            'hidden_dim': range(6, 36),
+            # 'loss_fn': [nn.losses.cross_entropy, nn.losses.mse_loss],
+            'num_layers': range(3, 11),
+            'optimizer': [optim.Adam, optim.SGD, optim.RMSprop]
+        }
+
 def get_model_hp_space(args):
     if args.model == mlp_name:
-        return {
-            'batch_size': hp.choice('batch_size', [32, 64, 128]),
+        space = {
             'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
-            'epochs': hp.choice('epochs', [10, 20, 30, 50]),
-            'hidden_dim': hp.choice('hidden_dim', range(6, 36)),
             'learning_rate': hp.loguniform('learning_rate', -5, 0),
-            'loss_fn': hp.choice('loss_fn', [nn.losses.cross_entropy, nn.losses.mse_loss]),
-            'num_layers': hp.choice('num_layers', range(3, 11)),
-            'optimizer': hp.choice('optimizer', [optim.Adam, optim.SGD, optim.RMSprop])
         }
+        for key, value in get_model_hp_choices(mlp_name).items():
+            space[key] = hp.choice(key, value)
+        return space
     
 def get_model_class(args):
     if args.model == mlp_name:
@@ -56,21 +64,22 @@ def main(args):
         'identifiers': identifiers,
         'target_name': target
     }
-    ds = DataShopDx(train_file="train.csv", test_file="test.csv", meta=meta)
+    ds = DataShopDx(train_file="train_cleaned.csv", test_file="test_cleaned.csv", meta=meta)
 
     space = get_model_hp_space(args)
     model_class = get_model_class(args)
     navigator = MlxNavigator(
         space=space,
         model_class=model_class,
+        model_hp_choices=get_model_hp_choices(args.model),
         data_shop=ds,
         eval_metric=args.eval_metric
     )
 
-    model = navigator.explore_and_learn(max_evals=10)
+    model = navigator.explore_and_learn(max_evals=1)
     model.save_model(f'{problem_name}_{args.model}_mlx')
 
-    predicted_outcome = model(ds.submission_set)
+    predicted_outcome = model(ds.submission_set).tolist()
     submission = pd.DataFrame({
         'PassengerId': ds.testing_ids,
         'Survived': predicted_outcome

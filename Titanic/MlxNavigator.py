@@ -3,9 +3,10 @@ from sklearn.metrics import accuracy_score, f1_score, recall_score, roc_auc_scor
 from typing import Any
 
 class MlxNavigator:
-    def __init__(self, space, model_class, data_shop, eval_metric):
+    def __init__(self, space, model_class, model_hp_choices, data_shop, eval_metric):
         self.space = space
         self.model_class = model_class
+        self.model_hp_choices = model_hp_choices
         self.data_shop = data_shop
         if eval_metric == 'accuracy': 
             self.eval_metric = accuracy_score
@@ -27,9 +28,9 @@ class MlxNavigator:
         # Take up the knife
         model.fit()
         # ŷ the data.
-        model.predict()
+        model_eval = model.predict()
         # Take your new shape
-        eval_score = 1 - model.eval
+        eval_score = 1 - model_eval
         return eval_score
         
     def explore_and_learn(self, max_evals:int):
@@ -40,10 +41,15 @@ class MlxNavigator:
             max_evals=max_evals, 
             trials=Trials())
 
-        best['loss_fn'] = self.space['loss_fn'][best['loss_fn']]
-        best['optimizer'] = self.space['optimizer'][best['optimizer']]
-        # intersecting_best = {k:best[k] for k in best if k in self.space}
-        print(f"model_params going into the last fitting: \n{self.model_params}\n{self.model_params['data_shop'].train_X}")
-        model_reshaped = self.model_class(params=self.model_params, exploratory_params=best)
+        best_hyperspot = {}
+        for key, value in self.space.items():
+            print(f"self.space[{key}]: \n{value}\n---\n{value[0]}\n\n")
+        for key, value in best.items():
+            if key in self.model_hp_choices:
+                best_hyperspot[key] = self.model_hp_choices[key][value]
+            else:
+                best_hyperspot[key] = value
+        print(f"Best hyperparameter location for the model: {best_hyperspot}")
+        model_reshaped = self.model_class(params=self.model_params, exploratory_params=best_hyperspot)
         model_reshaped.fit()
         return model_reshaped
