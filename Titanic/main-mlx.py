@@ -8,12 +8,13 @@ import pandas as pd
 from hyperopt import hp
 
 from DataShopDx import DataShopDx
-from MlxModels import MLX_MLP
+from MlxModels import MLX_MLP, Test_MLP
 from MlxNavigator import MlxNavigator
 
 problem_name = 'titanic'
 
 mlp_name = 'mlp'
+test_name = 'test'
 
 def get_model_hp_choices(name):
     if name == mlp_name:
@@ -25,20 +26,28 @@ def get_model_hp_choices(name):
             'num_layers': range(3, 11),
             'optimizer': [optim.Adam, optim.SGD, optim.RMSprop]
         }
+    elif name == test_name:
+        return {
+            'epochs': [3, 5, 7]
+        }
 
 def get_model_hp_space(args):
     if args.model == mlp_name:
         space = {
             'dropout_rate': hp.uniform('dropout_rate', 0.0, 0.75),
-            'learning_rate': hp.loguniform('learning_rate', -5, 0),
+            'learning_rate': hp.loguniform('learning_rate', -5, -2),
         }
-        for key, value in get_model_hp_choices(mlp_name).items():
-            space[key] = hp.choice(key, value)
-        return space
+    else:
+        space = {}
+    for key, value in get_model_hp_choices(args.model).items():
+        space[key] = hp.choice(key, value)
+    return space
     
 def get_model_class(args):
     if args.model == mlp_name:
         return MLX_MLP
+    if args.model == test_name:
+        return Test_MLP
     
 def main(args):
     # Identifiers
@@ -57,12 +66,10 @@ def main(args):
     # # To Discard
     #   'Name'
     #   'Ticket'
-    identifiers = ['PassengerId']
-    target = 'Survived'
 
     meta = {
-        'identifiers': identifiers,
-        'target_name': target
+        'identifiers': 'PassengerId',
+        'target_name': 'Survived'
     }
     ds = DataShopDx(train_file="train_cleaned.csv", test_file="test_cleaned.csv", meta=meta)
 
@@ -79,10 +86,12 @@ def main(args):
     model = navigator.explore_and_learn(max_evals=1)
     model.save_model(f'{problem_name}_{args.model}_mlx')
 
-    predicted_outcome = model(ds.submission_set).tolist()
+    predicted_outcome = model(ds.submission_set)
+    mx.eval(model.parameters())
+    flattened_prediction = [item[0] for item in predicted_outcome.tolist()]
     submission = pd.DataFrame({
         'PassengerId': ds.testing_ids,
-        'Survived': predicted_outcome
+        'Survived': flattened_prediction
     })
     submission.to_csv(f'{problem_name}_{args.model}_mlx_prediction.csv', index=False)
 
@@ -91,8 +100,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default=mlp_name,
-        choices=[mlp_name],
+        default=test_name,
+        choices=[mlp_name, test_name],
         help='Which model you\'d like to train on')
     parser.add_argument(
         '--eval_metric',

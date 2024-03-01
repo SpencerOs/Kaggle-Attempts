@@ -42,14 +42,11 @@ class MlxNavigator:
             trials=Trials())
 
         best_hyperspot = {}
-        for key, value in self.space.items():
-            print(f"self.space[{key}]: \n{value}\n---\n{value[0]}\n\n")
         for key, value in best.items():
             if key in self.model_hp_choices:
                 best_hyperspot[key] = self.model_hp_choices[key][value]
             else:
                 best_hyperspot[key] = value
-        print(f"Best hyperparameter location for the model: {best_hyperspot}")
         model_reshaped = self.model_class(params=self.model_params, exploratory_params=best_hyperspot)
         model_reshaped.fit()
         return model_reshaped

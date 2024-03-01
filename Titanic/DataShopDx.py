@@ -5,8 +5,7 @@ import mlx.data as dx
 import numpy as np
 
 class DataShopDx:
-    # Easy as 1...
-    def __init__(self, train_file:str, test_file:str, meta):
+    def __init__(self, train_file:str, test_file:str, meta:dict):
         try:
             with open(train_file, 'r') as file:
                 csv_reader = csv.DictReader(file)
@@ -30,6 +29,7 @@ class DataShopDx:
             features = np.delete(features, label_index, axis=1)
             sub_feature_names = np.array(test_csv_reader.fieldnames)
             sub_index = np.where(sub_feature_names == meta['identifiers'])[0][0]
+            self.test_ids = sub_features[:, sub_index]
             sub_features = np.delete(sub_features, sub_index, axis=1)
 
             # Convert feature data to numeric format
@@ -40,7 +40,6 @@ class DataShopDx:
             test_size = int(0.15 * len(features))
             self.X_train, self.X_test = features[test_size:], features[:test_size]
             self.y_train, self.y_test = labels[test_size:], labels[:test_size]
-            self.test_ids = sub_index
             self.X_val = sub_features
 
         except FileNotFoundError:
@@ -52,7 +51,7 @@ class DataShopDx:
         perm = mx.array(np.random.permutation(self.y_train.size))
         for s in range(0, self.y_train.size, batch_size):
             ids = perm[s : s + batch_size]
-            yield mx.array(self.X_train[ids].astype(np.float32)), mx.array(self.y_train[ids].astype(np.float32))
+            yield mx.array(self.X_train[ids].astype(np.float32)), mx.array(self.y_train[ids].astype(np.float32)).reshape((2,1))
     
     @property
     def train_X(self):
